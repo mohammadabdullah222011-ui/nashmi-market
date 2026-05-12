@@ -1,5 +1,5 @@
 import { db as drizzleDb, usersTable, productsTable, ordersTable, orderItemsTable, settingsTable, type InsertSettings, type Settings } from "@workspace/db";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, desc, count, sql, inArray } from "drizzle-orm";
 
 // In-memory notifications (no DB table yet)
 interface AdminNotification {
@@ -15,9 +15,30 @@ interface AdminNotification {
 let notifications: AdminNotification[] = [];
 let nextNotifId = 1;
 
-async function getOrderById(id: number) {
+async function enrichOrderItems(orderId: number): Promise<{ productId: number; name: string; price: number; quantity: number; imageUrl: string }[]> {
+  const items = await drizzleDb.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, orderId));
+  return Promise.all(items.map(async (item) => {
+    const product = await drizzleDb.select().from(productsTable).where(eq(productsTable.id, item.productId)).limit(1).then(r => r[0]);
+    return {
+      productId: item.productId,
+      name: product?.name || `منتج #${item.productId}`,
+      price: item.price,
+      quantity: item.quantity,
+      imageUrl: product?.imageUrl || "",
+    };
+  }));
+}
+
+async function getOrderByIdRaw(id: number) {
   const rows = await drizzleDb.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
   return rows[0] ?? null;
+}
+
+async function getOrderById(id: number) {
+  const row = await getOrderByIdRaw(id);
+  if (!row) return null;
+  const items = await enrichOrderItems(id);
+  return { ...row, items };
 }
 
 export const db = {
@@ -76,12 +97,23 @@ export const db = {
   },
 
   // ── Orders ─────────────────────────────────────────────
-  getOrders: () => drizzleDb.select().from(ordersTable).orderBy(desc(ordersTable.createdAt)),
+  getOrders: async () => {
+    const orders = await drizzleDb.select().from(ordersTable).orderBy(desc(ordersTable.createdAt));
+    return Promise.all(orders.map(async (o) => {
+      const items = await enrichOrderItems(o.id);
+      return { ...o, items };
+    }));
+  },
 
   getOrderById: getOrderById,
 
-  getOrdersByUserId: (userId: number) =>
-    drizzleDb.select().from(ordersTable).where(eq(ordersTable.userId, userId)),
+  getOrdersByUserId: async (userId: number) => {
+    const orders = await drizzleDb.select().from(ordersTable).where(eq(ordersTable.userId, userId));
+    return Promise.all(orders.map(async (o) => {
+      const items = await enrichOrderItems(o.id);
+      return { ...o, items };
+    }));
+  },
 
   createOrder: async (order: {
     userId: number | null; total: number; status?: string;
@@ -96,6 +128,7 @@ export const db = {
       phone: order.phone || "",
       address: order.address || "",
       paymentMethod: order.paymentMethod || "cash",
+      createdAt: new Date().toISOString(),
     }).returning();
     const newOrder = rows[0];
 

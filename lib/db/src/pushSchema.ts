@@ -40,6 +40,9 @@ const SCRIPTS = [
     total INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'pending',
     customer_name TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    address TEXT NOT NULL DEFAULT '',
+    payment_method TEXT NOT NULL DEFAULT 'cash',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE TABLE IF NOT EXISTS order_items (
@@ -66,6 +69,7 @@ const MIGRATIONS = [
   `ALTER TABLE orders ADD COLUMN phone TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE orders ADD COLUMN address TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'cash'`,
+  `UPDATE orders SET created_at = datetime('now') WHERE created_at = 'CURRENT_TIMESTAMP'`,
 ];
 
 export function pushSchema() {
