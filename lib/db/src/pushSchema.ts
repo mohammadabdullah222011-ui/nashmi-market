@@ -65,10 +65,8 @@ const SCRIPTS = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     instagram TEXT NOT NULL DEFAULT '',
     facebook TEXT NOT NULL DEFAULT '',
-    discord TEXT NOT NULL DEFAULT '',
     show_instagram INTEGER NOT NULL DEFAULT 1,
     show_facebook INTEGER NOT NULL DEFAULT 1,
-    show_discord INTEGER NOT NULL DEFAULT 1,
     store_name TEXT NOT NULL DEFAULT 'نشمي ماركت',
     store_phone TEXT NOT NULL DEFAULT '',
     store_email TEXT NOT NULL DEFAULT '',
@@ -82,10 +80,8 @@ const MIGRATIONS = [
   `ALTER TABLE orders ADD COLUMN address TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'cash'`,
   `UPDATE orders SET created_at = datetime('now') WHERE created_at = 'CURRENT_TIMESTAMP'`,
-  `ALTER TABLE app_settings ADD COLUMN discord TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE app_settings ADD COLUMN show_instagram INTEGER NOT NULL DEFAULT 1`,
   `ALTER TABLE app_settings ADD COLUMN show_facebook INTEGER NOT NULL DEFAULT 1`,
-  `ALTER TABLE app_settings ADD COLUMN show_discord INTEGER NOT NULL DEFAULT 1`,
 ];
 
 export function pushSchema() {

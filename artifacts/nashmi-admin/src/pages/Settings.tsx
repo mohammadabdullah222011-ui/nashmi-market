@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook } from "lucide-react";
-import { SiDiscord } from "react-icons/si";
+
 import { useLang } from "@/i18n/context";
 import { adminApi, type AdminSettings } from "@/lib/api";
 
@@ -32,7 +32,7 @@ export default function SettingsPage() {
   const { t, lang, setLang } = useLang();
   const [local, setLocal] = useState<LocalSettings>(loadLocalSettings);
   const [saved, setSaved] = useState(false);
-  const [social, setSocial] = useState({ instagram: "", facebook: "", discord: "", showInstagram: true, showFacebook: true, showDiscord: true });
+  const [social, setSocial] = useState({ instagram: "", facebook: "", showInstagram: true, showFacebook: true });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,10 +40,8 @@ export default function SettingsPage() {
       setSocial({
         instagram: s.instagram || "",
         facebook: s.facebook || "",
-        discord: s.discord || "",
         showInstagram: s.showInstagram !== 0,
         showFacebook: s.showFacebook !== 0,
-        showDiscord: s.showDiscord !== 0,
       });
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -64,10 +62,8 @@ export default function SettingsPage() {
       await adminApi.updateSettings({
         instagram: social.instagram,
         facebook: social.facebook,
-        discord: social.discord,
         showInstagram: social.showInstagram ? 1 : 0,
         showFacebook: social.showFacebook ? 1 : 0,
-        showDiscord: social.showDiscord ? 1 : 0,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -96,8 +92,8 @@ export default function SettingsPage() {
       <div className="space-y-4">
         {[
           { icon: Globe, label: t("اللغة"), desc: t("Arabic (الأردن)"), type: "select", value: lang, onChange: (v: string) => setLang(v as "ar" | "en"), options: [{ label: t("العربية"), value: "ar" }, { label: t("English"), value: "en" }] },
-          { icon: Bell, label: t("الإشعارات"), desc: t("إشعارات الطلبات الجديدة"), type: "toggle", value: local.notifications, onChange: () => toggle("notifications") },
-          { icon: Shield, label: t("المصادقة"), desc: t("مصادقة ثنائية (2FA)"), type: "toggle", value: local.twoFactor, onChange: () => toggle("twoFactor") },
+          { icon: Bell, label: t("الإشعارات"), desc: t(local.notifications ? "تفعيل إشعارات الطلبات والرسائل الجديدة" : "إيقاف الإشعارات — لن يتم جلب الإشعارات"), type: "toggle", value: local.notifications, onChange: () => toggle("notifications") },
+          { icon: Shield, label: t("المصادقة الثنائية"), desc: t(local.twoFactor ? "مفعلة — رمز تحقق إضافي مطلوب عند تسجيل الدخول" : "غير مفعلة — يوصى بتفعيلها لحماية إضافية"), type: "toggle", value: local.twoFactor, onChange: () => toggle("twoFactor") },
           { icon: Palette, label: t("المظهر"), desc: t(local.darkMode ? "داكن - الوضع الليلي" : "فاتح - الوضع النهاري"), type: "toggle", value: local.darkMode, onChange: () => toggle("darkMode") },
         ].map((s: any) => (
           <div key={s.label} className="stat-card p-5 flex items-center justify-between">
@@ -131,7 +127,6 @@ export default function SettingsPage() {
             {[
               { key: "instagram", icon: Instagram, color: "text-pink-400", label: "Instagram", showKey: "showInstagram" as const },
               { key: "facebook", icon: Facebook, color: "text-blue-400", label: "Facebook", showKey: "showFacebook" as const },
-              { key: "discord", icon: SiDiscord, color: "text-indigo-400", label: "Discord", showKey: "showDiscord" as const },
             ].map(({ key, icon: Icon, color, label, showKey }) => (
               <div key={key} className="flex items-center gap-3">
                 <button

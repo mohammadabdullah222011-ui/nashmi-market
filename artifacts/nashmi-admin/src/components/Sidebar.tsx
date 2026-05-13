@@ -55,6 +55,8 @@ export default function Sidebar({ collapsed, onToggle, noToggle }: SidebarProps)
 
   const fetchNotifCount = useCallback(async () => {
     try {
+      const ls = JSON.parse(localStorage.getItem("nashmi_admin_settings") || "{}");
+      if (ls.notifications === false) { setNotifCount(0); return; }
       const data = await adminApi.getUnreadCount();
       setNotifCount(data.count);
     } catch { /* ignore */ }

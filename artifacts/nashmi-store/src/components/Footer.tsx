@@ -1,24 +1,20 @@
 import { Link } from "wouter";
 import { Gamepad2, Mail, Phone, MapPin } from "lucide-react";
-import { SiInstagram, SiFacebook, SiDiscord } from "react-icons/si";
+import { SiInstagram, SiFacebook } from "react-icons/si";
 import { useState, useEffect } from "react";
 
 interface SocialState {
   instagram: string;
   facebook: string;
-  discord: string;
   showInstagram: boolean;
   showFacebook: boolean;
-  showDiscord: boolean;
 }
 
 const DEFAULT_SOCIAL: SocialState = {
   instagram: "#",
   facebook: "#",
-  discord: "#",
   showInstagram: true,
   showFacebook: true,
-  showDiscord: true,
 };
 
 function SocialLinks() {
@@ -33,10 +29,8 @@ function SocialLinks() {
           setSocial({
             instagram: data.instagram || "#",
             facebook: data.facebook || "#",
-            discord: data.discord || "#",
             showInstagram: data.showInstagram !== 0,
             showFacebook: data.showFacebook !== 0,
-            showDiscord: data.showDiscord !== 0,
           });
         }
       })
@@ -55,12 +49,6 @@ function SocialLinks() {
         <a href={social.facebook} target="_blank" rel="noopener noreferrer" aria-label="فيسبوك"
           className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
           <SiFacebook size={17} />
-        </a>
-      )}
-      {social.showDiscord && (
-        <a href={social.discord} target="_blank" rel="noopener noreferrer" aria-label="ديسكورد"
-          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
-          <SiDiscord size={17} />
         </a>
       )}
     </div>

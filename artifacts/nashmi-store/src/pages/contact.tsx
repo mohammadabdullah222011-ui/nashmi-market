@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from "lucide-react";
-import { SiInstagram, SiFacebook, SiDiscord } from "react-icons/si";
+import { SiInstagram, SiFacebook } from "react-icons/si";
 
 const DEFAULT_SETTINGS = {
   instagram: "#",
   facebook: "#",
-  discord: "#",
   showInstagram: true,
   showFacebook: true,
-  showDiscord: true,
 };
 
 const API_BASE = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
@@ -28,10 +26,8 @@ export default function ContactPage() {
           setSocial({
             instagram: data.instagram || "#",
             facebook: data.facebook || "#",
-            discord: data.discord || "#",
             showInstagram: data.showInstagram !== 0,
             showFacebook: data.showFacebook !== 0,
-            showDiscord: data.showDiscord !== 0,
           });
         }
       })
@@ -69,7 +65,6 @@ export default function ContactPage() {
   const socialLinks = [
     { href: social.instagram, icon: SiInstagram, show: social.showInstagram, label: "إنستغرام", hoverColor: "hover:text-pink-400 hover:border-pink-500/40 hover:bg-pink-600/10" },
     { href: social.facebook, icon: SiFacebook, show: social.showFacebook, label: "فيسبوك", hoverColor: "hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-600/10" },
-    { href: social.discord, icon: SiDiscord, show: social.showDiscord, label: "ديسكورد", hoverColor: "hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-600/10" },
   ].filter(s => s.show);
 
   return (

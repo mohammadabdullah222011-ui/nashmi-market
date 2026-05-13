@@ -44,6 +44,8 @@ export default function Topbar({ sidebarCollapsed, onMenuToggle }: TopbarProps) 
 
   const fetchNotifications = useCallback(async () => {
     try {
+      const ls = JSON.parse(localStorage.getItem("nashmi_admin_settings") || "{}");
+      if (ls.notifications === false) { setNotifications([]); return; }
       const data = await adminApi.getNotifications();
       setNotifications(data);
     } catch {
