@@ -2,13 +2,6 @@ import { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from "lucide-react";
 import { SiInstagram, SiFacebook } from "react-icons/si";
 
-const DEFAULT_SETTINGS = {
-  instagram: "#",
-  facebook: "#",
-  showInstagram: true,
-  showFacebook: true,
-};
-
 const API_BASE = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
 
 export default function ContactPage() {
@@ -16,18 +9,24 @@ export default function ContactPage() {
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [social, setSocial] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState({
+    instagram: "#", facebook: "#", showInstagram: true, showFacebook: true,
+    storeEmail: "info@nashmi.jo", storePhone: "+962 79 000 0000", storeAddress: "عمّان، المملكة الأردنية الهاشمية",
+  });
 
   useEffect(() => {
     fetch(`${API_BASE}/settings`)
       .then(r => r.json())
       .then(data => {
         if (data) {
-          setSocial({
+          setSettings({
             instagram: data.instagram || "#",
             facebook: data.facebook || "#",
             showInstagram: data.showInstagram !== 0,
             showFacebook: data.showFacebook !== 0,
+            storeEmail: data.storeEmail || "info@nashmi.jo",
+            storePhone: data.storePhone || "+962 79 000 0000",
+            storeAddress: data.storeAddress || "عمّان، المملكة الأردنية الهاشمية",
           });
         }
       })
@@ -57,14 +56,14 @@ export default function ContactPage() {
   };
 
   const contactInfo = [
-    { icon: Mail, label: "البريد الإلكتروني", value: "info@nashmi.jo" },
-    { icon: Phone, label: "رقم الجوال", value: "+962 79 000 0000" },
-    { icon: MapPin, label: "العنوان", value: "عمّان، المملكة الأردنية الهاشمية" },
+    { icon: Mail, label: "البريد الإلكتروني", value: settings.storeEmail },
+    { icon: Phone, label: "رقم الجوال", value: settings.storePhone },
+    { icon: MapPin, label: "العنوان", value: settings.storeAddress },
   ];
 
   const socialLinks = [
-    { href: social.instagram, icon: SiInstagram, show: social.showInstagram, label: "إنستغرام", hoverColor: "hover:text-pink-400 hover:border-pink-500/40 hover:bg-pink-600/10" },
-    { href: social.facebook, icon: SiFacebook, show: social.showFacebook, label: "فيسبوك", hoverColor: "hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-600/10" },
+    { href: settings.instagram, icon: SiInstagram, show: settings.showInstagram, label: "إنستغرام", hoverColor: "hover:text-pink-400 hover:border-pink-500/40 hover:bg-pink-600/10" },
+    { href: settings.facebook, icon: SiFacebook, show: settings.showFacebook, label: "فيسبوك", hoverColor: "hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-600/10" },
   ].filter(s => s.show);
 
   return (

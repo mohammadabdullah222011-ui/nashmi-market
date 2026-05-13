@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook } from "lucide-react";
+import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook, Phone, Mail, MapPin, Store } from "lucide-react";
 
 import { useLang } from "@/i18n/context";
 import { adminApi, type AdminSettings } from "@/lib/api";
@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [local, setLocal] = useState<LocalSettings>(loadLocalSettings);
   const [saved, setSaved] = useState(false);
   const [social, setSocial] = useState({ instagram: "", facebook: "", showInstagram: true, showFacebook: true });
+  const [store, setStore] = useState({ storeName: "", storePhone: "", storeEmail: "", storeAddress: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +43,12 @@ export default function SettingsPage() {
         facebook: s.facebook || "",
         showInstagram: s.showInstagram !== 0,
         showFacebook: s.showFacebook !== 0,
+      });
+      setStore({
+        storeName: s.storeName || "",
+        storePhone: s.storePhone || "",
+        storeEmail: s.storeEmail || "",
+        storeAddress: s.storeAddress || "",
       });
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -64,6 +71,10 @@ export default function SettingsPage() {
         facebook: social.facebook,
         showInstagram: social.showInstagram ? 1 : 0,
         showFacebook: social.showFacebook ? 1 : 0,
+        storeName: store.storeName,
+        storePhone: store.storePhone,
+        storeEmail: store.storeEmail,
+        storeAddress: store.storeAddress,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -143,6 +154,39 @@ export default function SettingsPage() {
                   className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50 disabled:opacity-30" />
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="stat-card p-5">
+          <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+            <Store size={14} className="text-red-400" />
+            {t("معلومات المتجر")}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">اسم المتجر</label>
+              <input type="text" value={store.storeName}
+                onChange={e => setStore(p => ({ ...p, storeName: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
+            </div>
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">رقم الهاتف</label>
+              <input type="text" value={store.storePhone}
+                onChange={e => setStore(p => ({ ...p, storePhone: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" dir="ltr" />
+            </div>
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">البريد الإلكتروني</label>
+              <input type="email" value={store.storeEmail}
+                onChange={e => setStore(p => ({ ...p, storeEmail: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" dir="ltr" />
+            </div>
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">العنوان</label>
+              <input type="text" value={store.storeAddress}
+                onChange={e => setStore(p => ({ ...p, storeAddress: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
+            </div>
           </div>
         </div>
       </div>

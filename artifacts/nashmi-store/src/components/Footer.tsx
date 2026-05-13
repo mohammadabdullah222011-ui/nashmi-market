@@ -3,22 +3,22 @@ import { Gamepad2, Mail, Phone, MapPin } from "lucide-react";
 import { SiInstagram, SiFacebook } from "react-icons/si";
 import { useState, useEffect } from "react";
 
-interface SocialState {
+interface SettingsState {
   instagram: string;
   facebook: string;
   showInstagram: boolean;
   showFacebook: boolean;
+  storeName: string;
+  storeEmail: string;
+  storePhone: string;
+  storeAddress: string;
 }
 
-const DEFAULT_SOCIAL: SocialState = {
-  instagram: "#",
-  facebook: "#",
-  showInstagram: true,
-  showFacebook: true,
-};
-
-function SocialLinks() {
-  const [social, setSocial] = useState<SocialState>(DEFAULT_SOCIAL);
+function Footer() {
+  const [settings, setSettings] = useState<SettingsState>({
+    instagram: "#", facebook: "#", showInstagram: true, showFacebook: true,
+    storeName: "نشمي سوق", storeEmail: "nashmisouq25@gmail.com", storePhone: "+962 795900316", storeAddress: "Jordan, Amman",
+  });
 
   useEffect(() => {
     const apiUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
@@ -26,36 +26,21 @@ function SocialLinks() {
       .then(r => r.json())
       .then(data => {
         if (data) {
-          setSocial({
+          setSettings({
             instagram: data.instagram || "#",
             facebook: data.facebook || "#",
             showInstagram: data.showInstagram !== 0,
             showFacebook: data.showFacebook !== 0,
+            storeName: data.storeName || "نشمي سوق",
+            storeEmail: data.storeEmail || "nashmisouq25@gmail.com",
+            storePhone: data.storePhone || "+962 795900316",
+            storeAddress: data.storeAddress || "Jordan, Amman",
           });
         }
       })
       .catch(() => {});
   }, []);
 
-  return (
-    <div className="flex items-center gap-3">
-      {social.showInstagram && (
-        <a href={social.instagram} target="_blank" rel="noopener noreferrer" aria-label="إنستغرام"
-          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
-          <SiInstagram size={17} />
-        </a>
-      )}
-      {social.showFacebook && (
-        <a href={social.facebook} target="_blank" rel="noopener noreferrer" aria-label="فيسبوك"
-          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
-          <SiFacebook size={17} />
-        </a>
-      )}
-    </div>
-  );
-}
-
-export default function Footer() {
   return (
     <footer
       className="border-t border-white/8 mt-20"
@@ -76,14 +61,26 @@ export default function Footer() {
                 className="text-2xl font-black text-white"
                 style={{ fontFamily: "'Cairo', sans-serif", fontWeight: 900 }}
               >
-                نشمي سوق
+                {settings.storeName}
               </span>
             </div>
             <p className="text-white/50 text-sm leading-relaxed max-w-xs mb-6">
               وجهتك الأولى للألعاب والإكسسوارات في الأردن. جودة لا تُضاهى، أسعار تُرضيك.
             </p>
-            {/* Social - links configurable from admin dashboard */}
-            <SocialLinks />
+            <div className="flex items-center gap-3">
+              {settings.showInstagram && (
+                <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="إنستغرام"
+                  className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
+                  <SiInstagram size={17} />
+                </a>
+              )}
+              {settings.showFacebook && (
+                <a href={settings.facebook} target="_blank" rel="noopener noreferrer" aria-label="فيسبوك"
+                  className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
+                  <SiFacebook size={17} />
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -120,15 +117,15 @@ export default function Footer() {
             <ul className="flex flex-col gap-4">
               <li className="flex items-center gap-3 text-white/50 text-sm">
                 <Mail size={16} className="text-red-400 flex-shrink-0" />
-                nashmisouq25@gmail.com
+                {settings.storeEmail}
               </li>
               <li className="flex items-center gap-3 text-white/50 text-sm">
                 <Phone size={16} className="text-red-400 flex-shrink-0" />
-                +962 795900316
+                {settings.storePhone}
               </li>
               <li className="flex items-start gap-3 text-white/50 text-sm">
                 <MapPin size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                Jordan, Amman
+                {settings.storeAddress}
               </li>
             </ul>
           </div>
@@ -137,7 +134,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/30 text-sm">
-            © 2025 نشمي سوق — جميع الحقوق محفوظة
+            © 2025 {settings.storeName} — جميع الحقوق محفوظة
           </p>
           <div className="flex items-center gap-4 text-white/30 text-xs">
             <Link href="/privacy" className="hover:text-white/60 transition-colors">سياسة الخصوصية</Link>
@@ -149,3 +146,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default Footer;
