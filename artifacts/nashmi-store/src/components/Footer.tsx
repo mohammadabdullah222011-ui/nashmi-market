@@ -1,37 +1,63 @@
 import { Link } from "wouter";
 import { Gamepad2, Mail, Phone, MapPin } from "lucide-react";
-import { SiInstagram, SiFacebook } from "react-icons/si";
+import { SiInstagram, SiFacebook, SiDiscord } from "react-icons/si";
 import { useState, useEffect } from "react";
 
-const DEFAULT_SOCIAL = {
-  instagram: "#",
-  facebook: "#",
+interface SocialData {
+  instagram: string;
+  facebook: string;
+  discord: string;
+  showInstagram: number;
+  showFacebook: number;
+  showDiscord: number;
+}
+
+const DEFAULT_SOCIAL: SocialData = {
+  instagram: "",
+  facebook: "",
+  discord: "",
+  showInstagram: 1,
+  showFacebook: 1,
+  showDiscord: 1,
 };
 
 function SocialLinks() {
-  const [social, setSocial] = useState(DEFAULT_SOCIAL);
+  const [social, setSocial] = useState<SocialData>(DEFAULT_SOCIAL);
 
   useEffect(() => {
     const apiUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
     fetch(`${apiUrl}/settings`)
       .then(r => r.json())
-      .then(data => {
-        if (data?.instagram) setSocial(prev => ({ ...prev, instagram: data.instagram }));
-        if (data?.facebook) setSocial(prev => ({ ...prev, facebook: data.facebook }));
+      .then((data: SocialData) => {
+        if (data) setSocial(data);
       })
       .catch(() => {});
   }, []);
 
+  const show = (platform: keyof SocialData) => {
+    return (social[`show${platform.charAt(0).toUpperCase() + platform.slice(1)}` as keyof SocialData] !== 0) && social[platform as keyof SocialData];
+  };
+
   return (
     <div className="flex items-center gap-3">
-      <a href={social.instagram} target="_blank" rel="noopener noreferrer" aria-label="إنستغرام"
-        className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
-        <SiInstagram size={17} />
-      </a>
-      <a href={social.facebook} target="_blank" rel="noopener noreferrer" aria-label="فيسبوك"
-        className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
-        <SiFacebook size={17} />
-      </a>
+      {show("instagram") && (
+        <a href={social.instagram} target="_blank" rel="noopener noreferrer" aria-label="إنستغرام"
+          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
+          <SiInstagram size={17} />
+        </a>
+      )}
+      {show("facebook") && (
+        <a href={social.facebook} target="_blank" rel="noopener noreferrer" aria-label="فيسبوك"
+          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200">
+          <SiFacebook size={17} />
+        </a>
+      )}
+      {show("discord") && (
+        <a href={social.discord} target="_blank" rel="noopener noreferrer" aria-label="ديسكورد"
+          className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition-all duration-200">
+          <SiDiscord size={17} />
+        </a>
+      )}
     </div>
   );
 }

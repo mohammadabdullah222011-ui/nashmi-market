@@ -106,6 +106,10 @@ export interface ApiSettings {
   id: number;
   instagram: string;
   facebook: string;
+  discord: string;
+  showInstagram: number;
+  showFacebook: number;
+  showDiscord: number;
   storeName: string;
   storePhone: string;
   storeEmail: string;

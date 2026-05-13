@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook } from "lucide-react";
+import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook, Eye, EyeOff } from "lucide-react";
 import { useLang } from "@/i18n/context";
 import { adminApi, type AdminSettings } from "@/lib/api";
+import { SiDiscord } from "react-icons/si";
 
 const SETTINGS_KEY = "nashmi_admin_settings";
 
@@ -23,12 +24,19 @@ export default function SettingsPage() {
   const { t, lang, setLang } = useLang();
   const [local, setLocal] = useState<LocalSettings>(loadLocalSettings);
   const [saved, setSaved] = useState(false);
-  const [social, setSocial] = useState({ instagram: "", facebook: "" });
+  const [social, setSocial] = useState({ instagram: "", facebook: "", discord: "", showInstagram: true, showFacebook: true, showDiscord: true });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     adminApi.getSettings().then(s => {
-      setSocial({ instagram: s.instagram || "", facebook: s.facebook || "" });
+      setSocial({
+        instagram: s.instagram || "",
+        facebook: s.facebook || "",
+        discord: s.discord || "",
+        showInstagram: s.showInstagram !== 0,
+        showFacebook: s.showFacebook !== 0,
+        showDiscord: s.showDiscord !== 0,
+      });
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -41,13 +49,30 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     try {
-      await adminApi.updateSettings({ instagram: social.instagram, facebook: social.facebook });
+      await adminApi.updateSettings({
+        instagram: social.instagram,
+        facebook: social.facebook,
+        discord: social.discord,
+        showInstagram: social.showInstagram ? 1 : 0,
+        showFacebook: social.showFacebook ? 1 : 0,
+        showDiscord: social.showDiscord ? 1 : 0,
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
       alert("فشل حفظ الإعدادات");
     }
   };
+
+  const SocialToggle = ({ label, icon: Icon, color, value, onChange }: { label: string; icon: any; color: string; value: boolean; onChange: (v: boolean) => void }) => (
+    <div className="flex items-center gap-3">
+      <Icon size={18} className={`${color} shrink-0`} />
+      <input type="text" placeholder={`رابط ${label}`}
+        value={value as any} disabled={loading}
+        onChange={(e) => {}}
+        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50 opacity-30 cursor-not-allowed" />
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -107,6 +132,11 @@ export default function SettingsPage() {
                 value={social.instagram} disabled={loading}
                 onChange={(e) => setSocial(p => ({ ...p, instagram: e.target.value }))}
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
+              <button onClick={() => setSocial(p => ({ ...p, showInstagram: !p.showInstagram }))}
+                className={`p-2 rounded-lg border transition-colors ${social.showInstagram ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
+                title={social.showInstagram ? "ظهر" : "مخفي"}>
+                {social.showInstagram ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
             <div className="flex items-center gap-3">
               <Facebook size={18} className="text-blue-400 shrink-0" />
@@ -114,6 +144,23 @@ export default function SettingsPage() {
                 value={social.facebook} disabled={loading}
                 onChange={(e) => setSocial(p => ({ ...p, facebook: e.target.value }))}
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
+              <button onClick={() => setSocial(p => ({ ...p, showFacebook: !p.showFacebook }))}
+                className={`p-2 rounded-lg border transition-colors ${social.showFacebook ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
+                title={social.showFacebook ? "ظهر" : "مخفي"}>
+                {social.showFacebook ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <SiDiscord size={18} className="text-indigo-400 shrink-0" />
+              <input type="text" placeholder="رابط Discord"
+                value={social.discord} disabled={loading}
+                onChange={(e) => setSocial(p => ({ ...p, discord: e.target.value }))}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
+              <button onClick={() => setSocial(p => ({ ...p, showDiscord: !p.showDiscord }))}
+                className={`p-2 rounded-lg border transition-colors ${social.showDiscord ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
+                title={social.showDiscord ? "ظهر" : "مخفي"}>
+                {social.showDiscord ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
           </div>
         </div>
