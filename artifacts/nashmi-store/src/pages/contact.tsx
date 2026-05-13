@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiDiscord } from "react-icons/si";
 
 const DEFAULT_SETTINGS = {
@@ -11,14 +11,17 @@ const DEFAULT_SETTINGS = {
   showDiscord: true,
 };
 
+const API_BASE = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
   const [social, setSocial] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
-    const apiUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
-    fetch(`${apiUrl}/settings`)
+    fetch(`${API_BASE}/settings`)
       .then(r => r.json())
       .then(data => {
         if (data) {
@@ -35,13 +38,26 @@ export default function ContactPage() {
       .catch(() => {});
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "فشل الإرسال");
+      setSubmitted(true);
       setForm({ name: "", email: "", message: "" });
-    }, 4000);
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSending(false);
+    }
   };
 
   const contactInfo = [
@@ -207,17 +223,18 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {error && <p className="text-red-400 text-sm text-center">{error}</p>}
                   <button
-                    type="submit"
-                    className="flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                    type="submit" disabled={sending}
+                    className="flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                     style={{
                       background: "linear-gradient(135deg, #dc2626, #b91c1c)",
                       boxShadow: "0 0 20px rgba(220,38,38,0.4)",
                     }}
                     data-testid="button-contact-submit"
                   >
-                    <Send size={20} />
-                    إرسال الرسالة
+                    {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                    {sending ? "جارٍ الإرسال..." : "إرسال الرسالة"}
                   </button>
                 </form>
               )}

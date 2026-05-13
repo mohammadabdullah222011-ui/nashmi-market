@@ -17,6 +17,7 @@ import Reports from "@/pages/Reports";
 import Security from "@/pages/Security";
 import ServerPage from "@/pages/Server";
 import NotificationsPage from "@/pages/NotificationsPage";
+import MessagesPage from "@/pages/Messages";
 import SettingsPage from "@/pages/Settings";
 import { AdminAuthProvider } from "@/context/AdminAuthContext";
 import AdminLoginGate from "@/components/AdminLoginGate";
@@ -52,6 +53,7 @@ function AdminLayout() {
             <Route path="/orders" component={Orders} />
             <Route path="/products" component={Products} />
             <Route path="/users" component={Users} />
+            <Route path="/messages" component={MessagesPage} />
             <Route path="/reports" component={Reports} />
             <Route path="/security" component={Security} />
             <Route path="/server" component={ServerPage} />

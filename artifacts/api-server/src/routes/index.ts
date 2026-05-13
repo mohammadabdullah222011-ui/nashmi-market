@@ -7,6 +7,7 @@ import dashboardRouter from "./dashboard.js";
 import usersRouter from "./users-fixed.js";
 import notificationsRouter from "./notifications.js";
 import settingsRouter from "./settings.js";
+import contactRouter from "./contact.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(dashboardRouter);
 router.use(usersRouter);
 router.use(notificationsRouter);
 router.use(settingsRouter);
+router.use(contactRouter);
 
 export default router;

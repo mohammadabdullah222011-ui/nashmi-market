@@ -74,6 +74,10 @@ export const adminApi = {
   getSettings: () => req<AdminSettings>("GET", "/settings"),
   updateSettings: (data: Partial<AdminSettings>) => req<AdminSettings>("PUT", "/settings", data),
 
+  // Contact Messages
+  getContactMessages: () => req<ContactMessage[]>("GET", "/contact"),
+  markContactMessageRead: (id: number) => req<ContactMessage>("PUT", `/contact/${id}/read`),
+
   // Notifications
   getNotifications: () => req<AdminNotification[]>("GET", "/notifications"),
   getUnreadCount: () => req<{ count: number }>("GET", "/notifications/unread-count"),
@@ -148,6 +152,15 @@ export interface AdminSettings {
   storeEmail: string;
   storeAddress: string;
   updatedAt: string;
+}
+
+export interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  read: number;
+  createdAt: string;
 }
 
 export interface DashboardData {

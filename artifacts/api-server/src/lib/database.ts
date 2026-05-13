@@ -1,4 +1,4 @@
-import { db as drizzleDb, usersTable, productsTable, ordersTable, orderItemsTable, settingsTable, type InsertSettings, type Settings } from "@workspace/db";
+import { db as drizzleDb, usersTable, productsTable, ordersTable, orderItemsTable, settingsTable, contactMessagesTable, type InsertSettings, type Settings, type ContactMessage } from "@workspace/db";
 import { eq, desc, count, sql, inArray } from "drizzle-orm";
 
 // In-memory notifications (no DB table yet)
@@ -178,6 +178,32 @@ export const db = {
   getNotifications: () => notifications,
   getUnreadCount: () => notifications.filter(n => !n.read).length,
   markNotificationsRead: () => { notifications.forEach(n => { n.read = true; }); },
+
+  // ── Contact Messages ──────────────────────────────────
+  createContactMessage: async (data: { name: string; email: string; message: string }) => {
+    const rows = await drizzleDb.insert(contactMessagesTable).values({
+      ...data,
+      createdAt: new Date().toISOString(),
+    }).returning();
+    const msg = rows[0];
+    notifications.push({
+      id: nextNotifId++,
+      type: "info",
+      title: "✉️ رسالة جديدة",
+      desc: `من ${data.name} — ${data.message.substring(0, 50)}${data.message.length > 50 ? "..." : ""}`,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+    return msg;
+  },
+
+  getContactMessages: () =>
+    drizzleDb.select().from(contactMessagesTable).orderBy(desc(contactMessagesTable.createdAt)),
+
+  markContactMessageRead: async (id: number) => {
+    const rows = await drizzleDb.update(contactMessagesTable).set({ read: 1 }).where(eq(contactMessagesTable.id, id)).returning();
+    return rows[0] ?? null;
+  },
 
   // ── Stats ──────────────────────────────────────────────
   getUserStats: async () => {

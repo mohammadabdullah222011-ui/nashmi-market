@@ -13,6 +13,7 @@ import {
   Gamepad2,
   Server,
   FileText,
+  Mail,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 import { useLang } from "@/i18n/context";
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { href: "/analytics", icon: BarChart3, labelKey: "التحليلات" },
   { href: "/orders", icon: ShoppingCart, labelKey: "الطلبات" },
   { href: "/products", icon: Package, labelKey: "المنتجات" },
+  { href: "/messages", icon: Mail, labelKey: "الرسائل" },
   { href: "/users", icon: Users, labelKey: "المستخدمون" },
   { href: "/reports", icon: FileText, labelKey: "التقارير" },
   { href: "/security", icon: Shield, labelKey: "الأمان" },
