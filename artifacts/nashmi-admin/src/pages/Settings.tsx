@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook, Eye, EyeOff } from "lucide-react";
+import { Settings as SettingsIcon, Save, Globe, Bell, Shield, Palette, RefreshCw, Instagram, Facebook } from "lucide-react";
+import { SiDiscord } from "react-icons/si";
 import { useLang } from "@/i18n/context";
 import { adminApi, type AdminSettings } from "@/lib/api";
-import { SiDiscord } from "react-icons/si";
 
 const SETTINGS_KEY = "nashmi_admin_settings";
 
@@ -17,6 +17,14 @@ function loadLocalSettings(): LocalSettings {
     return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null") || { notifications: true, twoFactor: false, darkMode: true };
   } catch {
     return { notifications: true, twoFactor: false, darkMode: true };
+  }
+}
+
+function applyTheme(dark: boolean) {
+  if (dark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
   }
 }
 
@@ -41,6 +49,10 @@ export default function SettingsPage() {
     }).catch(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    applyTheme(local.darkMode);
+  }, [local.darkMode]);
+
   const toggle = (key: keyof LocalSettings) => {
     const next = { ...local, [key]: !local[key] };
     setLocal(next);
@@ -64,16 +76,6 @@ export default function SettingsPage() {
     }
   };
 
-  const SocialToggle = ({ label, icon: Icon, color, value, onChange }: { label: string; icon: any; color: string; value: boolean; onChange: (v: boolean) => void }) => (
-    <div className="flex items-center gap-3">
-      <Icon size={18} className={`${color} shrink-0`} />
-      <input type="text" placeholder={`رابط ${label}`}
-        value={value as any} disabled={loading}
-        onChange={(e) => {}}
-        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50 opacity-30 cursor-not-allowed" />
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -96,7 +98,7 @@ export default function SettingsPage() {
           { icon: Globe, label: t("اللغة"), desc: t("Arabic (الأردن)"), type: "select", value: lang, onChange: (v: string) => setLang(v as "ar" | "en"), options: [{ label: t("العربية"), value: "ar" }, { label: t("English"), value: "en" }] },
           { icon: Bell, label: t("الإشعارات"), desc: t("إشعارات الطلبات الجديدة"), type: "toggle", value: local.notifications, onChange: () => toggle("notifications") },
           { icon: Shield, label: t("المصادقة"), desc: t("مصادقة ثنائية (2FA)"), type: "toggle", value: local.twoFactor, onChange: () => toggle("twoFactor") },
-          { icon: Palette, label: t("المظهر"), desc: t("داكن - الوضع الليلي"), type: "toggle", value: local.darkMode, onChange: () => toggle("darkMode") },
+          { icon: Palette, label: t("المظهر"), desc: t(local.darkMode ? "داكن - الوضع الليلي" : "فاتح - الوضع النهاري"), type: "toggle", value: local.darkMode, onChange: () => toggle("darkMode") },
         ].map((s: any) => (
           <div key={s.label} className="stat-card p-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -125,43 +127,27 @@ export default function SettingsPage() {
 
         <div className="stat-card p-5">
           <h3 className="text-white font-semibold text-sm mb-4">{t("روابط التواصل الاجتماعي")}</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Instagram size={18} className="text-pink-400 shrink-0" />
-              <input type="text" placeholder="رابط Instagram"
-                value={social.instagram} disabled={loading}
-                onChange={(e) => setSocial(p => ({ ...p, instagram: e.target.value }))}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
-              <button onClick={() => setSocial(p => ({ ...p, showInstagram: !p.showInstagram }))}
-                className={`p-2 rounded-lg border transition-colors ${social.showInstagram ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
-                title={social.showInstagram ? "ظهر" : "مخفي"}>
-                {social.showInstagram ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <Facebook size={18} className="text-blue-400 shrink-0" />
-              <input type="text" placeholder="رابط Facebook"
-                value={social.facebook} disabled={loading}
-                onChange={(e) => setSocial(p => ({ ...p, facebook: e.target.value }))}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
-              <button onClick={() => setSocial(p => ({ ...p, showFacebook: !p.showFacebook }))}
-                className={`p-2 rounded-lg border transition-colors ${social.showFacebook ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
-                title={social.showFacebook ? "ظهر" : "مخفي"}>
-                {social.showFacebook ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <SiDiscord size={18} className="text-indigo-400 shrink-0" />
-              <input type="text" placeholder="رابط Discord"
-                value={social.discord} disabled={loading}
-                onChange={(e) => setSocial(p => ({ ...p, discord: e.target.value }))}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50" />
-              <button onClick={() => setSocial(p => ({ ...p, showDiscord: !p.showDiscord }))}
-                className={`p-2 rounded-lg border transition-colors ${social.showDiscord ? "border-green-500/40 text-green-400" : "border-white/10 text-white/30"}`}
-                title={social.showDiscord ? "ظهر" : "مخفي"}>
-                {social.showDiscord ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
-            </div>
+          <div className="space-y-4">
+            {[
+              { key: "instagram", icon: Instagram, color: "text-pink-400", label: "Instagram", showKey: "showInstagram" as const },
+              { key: "facebook", icon: Facebook, color: "text-blue-400", label: "Facebook", showKey: "showFacebook" as const },
+              { key: "discord", icon: SiDiscord, color: "text-indigo-400", label: "Discord", showKey: "showDiscord" as const },
+            ].map(({ key, icon: Icon, color, label, showKey }) => (
+              <div key={key} className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSocial(p => ({ ...p, [showKey]: !p[showKey] }))}
+                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${social[showKey] ? "bg-red-500/60" : "bg-white/10"}`}
+                >
+                  <div className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all shadow-md ${social[showKey] ? "right-[18px]" : "right-0.5"}`} />
+                </button>
+                <Icon size={18} className={`${color} shrink-0`} />
+                <input type="text" placeholder={`رابط ${label}`}
+                  value={(social as any)[key]} disabled={loading || !social[showKey]}
+                  onChange={(e) => setSocial(p => ({ ...p, [key]: e.target.value }))}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500/50 disabled:opacity-30" />
+              </div>
+            ))}
           </div>
         </div>
       </div>

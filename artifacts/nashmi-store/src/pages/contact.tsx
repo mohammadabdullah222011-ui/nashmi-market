@@ -1,10 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
-import { SiX, SiInstagram, SiDiscord } from "react-icons/si";
+import { SiInstagram, SiFacebook, SiDiscord } from "react-icons/si";
+
+const DEFAULT_SETTINGS = {
+  instagram: "#",
+  facebook: "#",
+  discord: "#",
+  showInstagram: true,
+  showFacebook: true,
+  showDiscord: true,
+};
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [social, setSocial] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    const apiUrl = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined) || "https://nashmi-market.onrender.com/api";
+    fetch(`${apiUrl}/settings`)
+      .then(r => r.json())
+      .then(data => {
+        if (data) {
+          setSocial({
+            instagram: data.instagram || "#",
+            facebook: data.facebook || "#",
+            discord: data.discord || "#",
+            showInstagram: data.showInstagram !== 0,
+            showFacebook: data.showFacebook !== 0,
+            showDiscord: data.showDiscord !== 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +49,12 @@ export default function ContactPage() {
     { icon: Phone, label: "رقم الجوال", value: "+962 79 000 0000" },
     { icon: MapPin, label: "العنوان", value: "عمّان، المملكة الأردنية الهاشمية" },
   ];
+
+  const socialLinks = [
+    { href: social.instagram, icon: SiInstagram, show: social.showInstagram, label: "إنستغرام", hoverColor: "hover:text-pink-400 hover:border-pink-500/40 hover:bg-pink-600/10" },
+    { href: social.facebook, icon: SiFacebook, show: social.showFacebook, label: "فيسبوك", hoverColor: "hover:text-blue-400 hover:border-blue-500/40 hover:bg-blue-600/10" },
+    { href: social.discord, icon: SiDiscord, show: social.showDiscord, label: "ديسكورد", hoverColor: "hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-600/10" },
+  ].filter(s => s.show);
 
   return (
     <div className="min-h-screen pt-24 pb-20">
@@ -62,25 +97,29 @@ export default function ContactPage() {
             ))}
 
             {/* Social */}
-            <div
-              className="p-5 rounded-2xl border border-white/8"
-              style={{ background: "rgba(255,255,255,0.03)" }}
-            >
-              <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-4">
-                تابعنا
-              </p>
-              <div className="flex gap-3">
-                {[SiX, SiInstagram, SiDiscord].map((Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:border-red-500/40 hover:bg-red-600/10 transition-all duration-200"
-                  >
-                    <Icon size={17} />
-                  </a>
-                ))}
+            {socialLinks.length > 0 && (
+              <div
+                className="p-5 rounded-2xl border border-white/8"
+                style={{ background: "rgba(255,255,255,0.03)" }}
+              >
+                <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-4">
+                  تابعنا
+                </p>
+                <div className="flex gap-3">
+                  {socialLinks.map((s, i) => (
+                    <a
+                      key={i}
+                      href={s.href}
+                      target="_blank" rel="noopener noreferrer"
+                      aria-label={s.label}
+                      className={`w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-white/50 ${s.hoverColor} transition-all duration-200`}
+                    >
+                      <s.icon size={17} />
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Hours */}
             <div

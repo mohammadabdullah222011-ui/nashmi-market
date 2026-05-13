@@ -16,10 +16,14 @@ router.get("/settings", async (req, res) => {
 // PUT /api/settings
 router.put("/settings", async (req, res) => {
   try {
-    const { instagram, facebook, storeName, storePhone, storeEmail, storeAddress } = req.body;
+    const { instagram, facebook, discord, showInstagram, showFacebook, showDiscord, storeName, storePhone, storeEmail, storeAddress } = req.body;
     const updated = await db.updateSettings({
       instagram,
       facebook,
+      discord,
+      showInstagram,
+      showFacebook,
+      showDiscord,
       storeName,
       storePhone,
       storeEmail,
