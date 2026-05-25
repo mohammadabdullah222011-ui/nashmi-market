@@ -11,6 +11,7 @@ export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [customerName, setCustomerName] = useState(user?.name || "");
   const [phone, setPhone] = useState("");
@@ -25,10 +26,11 @@ export default function CheckoutPage() {
     setChecking(true);
     setError("");
     try {
-      await api.createOrder(items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })), phone.trim(), customerName.trim(), address.trim(), paymentMethod);
+      const result = await api.createOrder(items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })), phone.trim(), customerName.trim(), address.trim(), paymentMethod);
+      setLastOrderId(result.id);
       setSuccess(true);
       clearCart();
-      setTimeout(() => navigate("/"), 2500);
+      setTimeout(() => navigate("/"), 4000);
     } catch (e: any) {
       setError(e.message || "حدث خطأ أثناء الطلب");
     } finally {
@@ -44,7 +46,13 @@ export default function CheckoutPage() {
             <CheckCircle size={48} className="text-green-400" />
           </div>
           <h1 className="text-3xl font-black text-white mb-3" style={{ fontFamily: "'Cairo', sans-serif" }}>تم استلام طلبك!</h1>
+          {lastOrderId && (
+            <p className="text-red-400 font-bold text-xl mb-2" style={{ fontFamily: "'Cairo', sans-serif" }}>رقم الطلب: #{String(lastOrderId).padStart(4, "0")}</p>
+          )}
           <p className="text-white/50">سيتم التواصل معك قريباً لتأكيد الطلب والتوصيل</p>
+          <Link href="/my-orders" className="inline-block mt-4 px-6 py-2.5 rounded-xl font-bold text-white text-sm" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+            عرض طلباتي
+          </Link>
         </div>
       </div>
     );

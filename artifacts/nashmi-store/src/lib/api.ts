@@ -61,6 +61,9 @@ export const api = {
 
   myOrders: () => req<ApiOrder[]>("GET", "/orders/my"),
 
+  updateMyOrder: (id: number, data: { phone?: string; address?: string; paymentMethod?: string }) =>
+    req<ApiOrder>("PUT", `/orders/my/${id}`, data),
+
   // Settings
   getSettings: () => req<ApiSettings>("GET", "/settings"),
 
@@ -100,6 +103,7 @@ export interface ApiOrder {
   address: string;
   paymentMethod: string;
   createdAt: string;
+  items?: { productId: number; name: string; price: number; quantity: number; imageUrl: string }[];
 }
 
 export interface ApiSettings {

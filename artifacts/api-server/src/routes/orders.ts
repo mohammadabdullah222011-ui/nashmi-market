@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "../lib/database.js";
+import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
 
 // POST /api/orders (authenticated users)
-router.post("/orders", async (req, res) => {
+router.post("/orders", requireAuth, async (req, res) => {
   try {
     const { items, phone, customerName, address, paymentMethod } = req.body as { items: { product_id: number; quantity: number }[]; phone?: string; customerName?: string; address?: string; paymentMethod?: string };
     if (!items?.length) {
@@ -35,7 +36,7 @@ router.post("/orders", async (req, res) => {
     }));
 
     const order = await db.createOrder({
-      userId: null,
+      userId: req.user!.userId,
       total,
       customerName: customerName?.trim() || "عميل",
       phone: phone?.trim() || "",
@@ -51,9 +52,9 @@ router.post("/orders", async (req, res) => {
 });
 
 // GET /api/orders/my (current user's orders)
-router.get("/orders/my", async (_req, res) => {
+router.get("/orders/my", requireAuth, async (req, res) => {
   try {
-    const orders = await db.getOrders();
+    const orders = await db.getOrdersByUserId(req.user!.userId);
     res.json(orders);
   } catch {
     res.status(500).json({ error: "خطأ في الخادم" });
@@ -78,6 +79,27 @@ router.post("/orders/manual", async (req, res) => {
       items: items || [],
     });
     res.status(201).json(order);
+  } catch {
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// PUT /api/orders/my/:id (customer - edit own order)
+router.put("/orders/my/:id", requireAuth, async (req, res) => {
+  try {
+    const order = await db.getOrderById(Number(req.params.id));
+    if (!order) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    if (order.userId !== req.user!.userId) {
+      res.status(403).json({ error: "لا يمكنك تعديل هذا الطلب" });
+      return;
+    }
+    if (order.status !== "pending") {
+      res.status(400).json({ error: "لا يمكن تعديل طلب لم يعد معلقاً" });
+      return;
+    }
+    const { phone, address, paymentMethod } = req.body as { phone?: string; address?: string; paymentMethod?: string };
+    const updated = await db.updateOrderCustomer(Number(req.params.id), { phone, address, paymentMethod });
+    res.json(updated);
   } catch {
     res.status(500).json({ error: "خطأ في الخادم" });
   }

@@ -15,6 +15,7 @@ import ContactPage from "@/pages/contact";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import CheckoutPage from "@/pages/checkout";
+import MyOrdersPage from "@/pages/my-orders";
 import PrivacyPage from "@/pages/privacy";
 import TermsPage from "@/pages/terms";
 
@@ -42,6 +43,7 @@ function Router() {
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
         <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/my-orders" component={MyOrdersPage} />
         <Route path="/privacy" component={PrivacyPage} />
         <Route path="/terms" component={TermsPage} />
         <Route component={NotFound} />

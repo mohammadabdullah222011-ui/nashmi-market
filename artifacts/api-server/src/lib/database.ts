@@ -187,6 +187,15 @@ export const db = {
     return rows[0] ?? null;
   },
 
+  updateOrderCustomer: async (id: number, data: { phone?: string; address?: string; paymentMethod?: string }) => {
+    const updateData: Record<string, unknown> = {};
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
+    const rows = await drizzleDb.update(ordersTable).set(updateData).where(eq(ordersTable.id, id)).returning();
+    return rows[0] ?? null;
+  },
+
   deleteOrder: async (id: number) => {
     await drizzleDb.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));
     const result = await drizzleDb.delete(ordersTable).where(eq(ordersTable.id, id)).returning();

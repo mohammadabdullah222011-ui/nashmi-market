@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Menu, X, User, LogOut, Settings, LayoutDashboard, Shield } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Settings, LayoutDashboard, Shield, Package } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@/context/UserContext";
 import CartDrawer from "@/components/CartDrawer";
@@ -158,6 +158,14 @@ export default function Navbar() {
                           تعديل الملف الشخصي
                         </button>
 
+                        <button
+                          onClick={() => { navigate("/my-orders"); setProfileOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors text-right"
+                        >
+                          <Package size={15} className="text-white/40" />
+                          طلباتي
+                        </button>
+
                         {/* Admin Panel link — admins only */}
                         {isAdmin && (
                           <a
@@ -247,6 +255,13 @@ export default function Navbar() {
                   >
                     <Settings size={15} />
                     تعديل الملف الشخصي
+                  </button>
+                  <button
+                    onClick={() => { navigate("/my-orders"); setMobileOpen(false); }}
+                    className="px-4 py-3 rounded-lg border border-white/10 text-white/70 text-sm font-semibold text-right flex items-center gap-2 hover:bg-white/5 transition-all"
+                  >
+                    <Package size={15} />
+                    طلباتي
                   </button>
                   {isAdmin && (
                     <a
