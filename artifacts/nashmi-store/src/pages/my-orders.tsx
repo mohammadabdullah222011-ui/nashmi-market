@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ArrowRight, Phone, MapPin, CreditCard, DollarSign, Loader2, Save, X, Eye, Edit3, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, ArrowRight, Phone, MapPin, CreditCard, DollarSign, Loader2, Save, X, Eye, Edit3, ChevronDown, ChevronUp, Trash2, Minus, Plus, AlertTriangle } from "lucide-react";
 import { api, type ApiOrder } from "@/lib/api";
 import { useUser } from "@/context/UserContext";
 
@@ -37,6 +37,11 @@ export default function MyOrdersPage() {
   const [editForm, setEditForm] = useState({ phone: "", address: "", paymentMethod: "cash" as "cash" | "click" });
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [cancelConfirmId, setCancelConfirmId] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [editingItemsId, setEditingItemsId] = useState<number | null>(null);
+  const [editItemsForm, setEditItemsForm] = useState<{ product_id: number; quantity: number }[]>([]);
+  const [savingItems, setSavingItems] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -77,7 +82,67 @@ export default function MyOrdersPage() {
     }
   };
 
+  const handleCancelClick = (id: number) => {
+    setCancelConfirmId(id);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (cancelConfirmId === null) return;
+    setCancelling(true);
+    try {
+      await api.cancelMyOrder(cancelConfirmId);
+      setOrders(prev => prev.map(o => o.id === cancelConfirmId ? { ...o, status: "cancelled" } : o));
+      setCancelConfirmId(null);
+    } catch (e: any) {
+      setError(e.message || "حدث خطأ");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const startEditItems = (order: ApiOrder) => {
+    setEditingItemsId(order.id);
+    setEditItemsForm(
+      (order.items || []).map(item => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      }))
+    );
+  };
+
+  const cancelEditItems = () => {
+    setEditingItemsId(null);
+    setEditItemsForm([]);
+  };
+
+  const updateItemQuantity = (productId: number, delta: number) => {
+    setEditItemsForm(prev =>
+      prev.map(item =>
+        item.product_id === productId
+          ? { ...item, quantity: Math.max(0, item.quantity + delta) }
+          : item
+      ).filter(item => item.quantity > 0)
+    );
+  };
+
+  const saveEditItems = async () => {
+    if (editingItemsId === null) return;
+    if (editItemsForm.length === 0) { setError("يجب أن يحتوي الطلب على منتج واحد على الأقل"); return; }
+    setSavingItems(true);
+    try {
+      const updated = await api.updateMyOrderItems(editingItemsId, editItemsForm);
+      setOrders(prev => prev.map(o => o.id === editingItemsId ? updated : o));
+      setEditingItemsId(null);
+      setEditItemsForm([]);
+    } catch (e: any) {
+      setError(e.message || "حدث خطأ");
+    } finally {
+      setSavingItems(false);
+    }
+  };
+
   const toggleExpand = (id: number) => {
+    if (editingItemsId === id) return;
     setExpandedId(expandedId === id ? null : id);
   };
 
@@ -150,26 +215,67 @@ export default function MyOrdersPage() {
                     {order.items && order.items.length > 0 && (
                       <div className="mb-4 space-y-2">
                         <p className="text-white/50 text-xs font-medium mb-2">المنتجات</p>
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-3 p-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-                            {item.imageUrl && (
-                              <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-cover rounded-lg" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium">{item.name}</p>
-                              <p className="text-white/40 text-xs">{item.quantity} × {item.price.toLocaleString("en")} د.أ</p>
+                        {(editingItemsId === order.id ? editItemsForm : order.items).map((item: any, idx: number) => {
+                          const origItem = order.items?.[idx];
+                          const isEditing = editingItemsId === order.id;
+                          return (
+                            <div key={idx} className="flex items-center gap-3 p-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
+                              {origItem?.imageUrl && (
+                                <img src={origItem.imageUrl} alt={origItem.name} className="w-12 h-12 object-cover rounded-lg" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-sm font-medium">{origItem?.name || `منتج #${item.product_id}`}</p>
+                                {isEditing ? (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <button onClick={() => updateItemQuantity(item.product_id, -1)}
+                                      className="w-7 h-7 rounded-lg border border-white/10 text-white/50 hover:text-white hover:border-red-500/30 hover:bg-red-500/10 transition-all flex items-center justify-center">
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="text-white font-bold text-sm min-w-[20px] text-center">{item.quantity}</span>
+                                    <button onClick={() => updateItemQuantity(item.product_id, 1)}
+                                      className="w-7 h-7 rounded-lg border border-white/10 text-white/50 hover:text-white hover:border-green-500/30 hover:bg-green-500/10 transition-all flex items-center justify-center">
+                                      <Plus size={12} />
+                                    </button>
+                                    <span className="text-white/40 text-xs mr-2">{(origItem?.price || 0) * item.quantity} د.أ</span>
+                                  </div>
+                                ) : (
+                                  <p className="text-white/40 text-xs">{item.quantity} × {item.price?.toLocaleString?.("en") || 0} د.أ</p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
+                        {editingItemsId !== order.id && (
+                          <p className="text-white/30 text-sm mt-2">المجموع: <span className="text-white font-bold">{order.total.toLocaleString("en")} د.أ</span></p>
+                        )}
                       </div>
                     )}
 
-                    {/* Editing form */}
-                    {editingId === order.id ? (
+                    {/* Editing items form */}
+                    {editingItemsId === order.id ? (
+                      <div className="space-y-3 rounded-xl p-4 border border-blue-500/20" style={{ background: "rgba(59,130,246,0.05)" }}>
+                        <p className="text-white font-semibold text-sm flex items-center gap-2">
+                          <Edit3 size={14} className="text-blue-400" />
+                          تعديل المنتجات
+                        </p>
+                        <div className="flex gap-2">
+                          <button onClick={saveEditItems} disabled={savingItems}
+                            className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all"
+                            style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}>
+                            {savingItems ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            حفظ
+                          </button>
+                          <button onClick={cancelEditItems}
+                            className="px-4 py-2.5 rounded-xl border border-white/10 text-white/50 text-sm hover:text-white hover:bg-white/5 transition-all">
+                            إلغاء
+                          </button>
+                        </div>
+                      </div>
+                    ) : editingId === order.id ? (
                       <div className="space-y-3 rounded-xl p-4 border border-red-500/20" style={{ background: "rgba(220,38,38,0.05)" }}>
                         <p className="text-white font-semibold text-sm flex items-center gap-2">
                           <Edit3 size={14} className="text-red-400" />
-                          تعديل الطلب
+                          تعديل معلومات التوصيل
                         </p>
                         <div className="relative">
                           <Phone size={14} className="absolute top-1/2 -translate-y-1/2 right-3 text-white/30" />
@@ -228,11 +334,23 @@ export default function MyOrdersPage() {
                           <span className="text-white/60">{order.paymentMethod === "cash" ? "الدفع عند الاستلام" : "تحويل بنكي / كليك"}</span>
                         </div>
                         {order.status === "pending" && (
-                          <button onClick={() => startEdit(order)}
-                            className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all">
-                            <Edit3 size={14} />
-                            تعديل الطلب
-                          </button>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <button onClick={() => startEdit(order)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all">
+                              <Edit3 size={14} />
+                              تعديل التوصيل
+                            </button>
+                            <button onClick={() => startEditItems(order)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-blue-500/30 text-blue-400 text-sm font-semibold hover:bg-blue-500/10 transition-all">
+                              <Package size={14} />
+                              تعديل المنتجات
+                            </button>
+                            <button onClick={() => handleCancelClick(order.id)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 text-red-400/70 text-sm hover:text-red-400 hover:bg-red-500/8 transition-all">
+                              <Trash2 size={14} />
+                              إلغاء الطلب
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -240,6 +358,41 @@ export default function MyOrdersPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Cancel confirmation modal */}
+        {cancelConfirmId !== null && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
+            onClick={() => setCancelConfirmId(null)}
+          >
+            <div
+              className="w-full max-w-sm rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
+              style={{ background: "rgba(10,10,10,0.98)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-8 text-center">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)" }}>
+                  <AlertTriangle size={32} className="text-red-400" />
+                </div>
+                <h2 className="text-white font-bold text-lg mb-2">إلغاء الطلب</h2>
+                <p className="text-white/50 text-sm mb-6">هل أنت متأكد من إلغاء الطلب رقم #{String(cancelConfirmId).padStart(4, "0")}؟</p>
+                <div className="flex gap-3">
+                  <button onClick={handleCancelConfirm} disabled={cancelling}
+                    className="flex-1 py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all"
+                    style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+                    {cancelling ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    تأكيد الإلغاء
+                  </button>
+                  <button onClick={() => setCancelConfirmId(null)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-semibold hover:text-white hover:bg-white/5 transition-all">
+                    رجوع
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

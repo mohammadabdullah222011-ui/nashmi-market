@@ -64,6 +64,12 @@ export const api = {
   updateMyOrder: (id: number, data: { phone?: string; address?: string; paymentMethod?: string }) =>
     req<ApiOrder>("PUT", `/orders/my/${id}`, data),
 
+  cancelMyOrder: (id: number) =>
+    req<ApiOrder>("PUT", `/orders/my/${id}/cancel`),
+
+  updateMyOrderItems: (id: number, items: { product_id: number; quantity: number }[]) =>
+    req<ApiOrder>("PUT", `/orders/my/${id}/items`, { items }),
+
   // Settings
   getSettings: () => req<ApiSettings>("GET", "/settings"),
 

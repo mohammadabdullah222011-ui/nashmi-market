@@ -196,6 +196,28 @@ export const db = {
     return rows[0] ?? null;
   },
 
+  cancelOrder: async (id: number) => {
+    const rows = await drizzleDb.update(ordersTable).set({ status: "cancelled" }).where(eq(ordersTable.id, id)).returning();
+    return rows[0] ?? null;
+  },
+
+  updateOrderItems: async (id: number, items: { product_id: number; quantity: number }[]) => {
+    let total = 0;
+    const orderItems: { orderId: number; productId: number; quantity: number; price: number }[] = [];
+    for (const item of items) {
+      const product = await drizzleDb.select().from(productsTable).where(eq(productsTable.id, item.product_id)).limit(1).then(r => r[0]);
+      if (!product) continue;
+      orderItems.push({ orderId: id, productId: item.product_id, quantity: item.quantity, price: product.price });
+      total += product.price * item.quantity;
+    }
+    await drizzleDb.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+    if (orderItems.length > 0) {
+      await drizzleDb.insert(orderItemsTable).values(orderItems);
+    }
+    const [updated] = await drizzleDb.update(ordersTable).set({ total }).where(eq(ordersTable.id, id)).returning();
+    return updated ?? null;
+  },
+
   deleteOrder: async (id: number) => {
     await drizzleDb.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));
     const result = await drizzleDb.delete(ordersTable).where(eq(ordersTable.id, id)).returning();

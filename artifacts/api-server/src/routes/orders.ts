@@ -84,7 +84,7 @@ router.post("/orders/manual", async (req, res) => {
   }
 });
 
-// PUT /api/orders/my/:id (customer - edit own order)
+// PUT /api/orders/my/:id (customer - edit own order info)
 router.put("/orders/my/:id", requireAuth, async (req, res) => {
   try {
     const order = await db.getOrderById(Number(req.params.id));
@@ -100,6 +100,53 @@ router.put("/orders/my/:id", requireAuth, async (req, res) => {
     const { phone, address, paymentMethod } = req.body as { phone?: string; address?: string; paymentMethod?: string };
     const updated = await db.updateOrderCustomer(Number(req.params.id), { phone, address, paymentMethod });
     res.json(updated);
+  } catch {
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// PUT /api/orders/my/:id/cancel (customer - cancel own order)
+router.put("/orders/my/:id/cancel", requireAuth, async (req, res) => {
+  try {
+    const order = await db.getOrderById(Number(req.params.id));
+    if (!order) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    if (order.userId !== req.user!.userId) {
+      res.status(403).json({ error: "لا يمكنك إلغاء هذا الطلب" });
+      return;
+    }
+    if (order.status !== "pending") {
+      res.status(400).json({ error: "لا يمكن إلغاء طلب لم يعد معلقاً" });
+      return;
+    }
+    const cancelled = await db.cancelOrder(Number(req.params.id));
+    res.json(cancelled);
+  } catch {
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// PUT /api/orders/my/:id/items (customer - edit own order items)
+router.put("/orders/my/:id/items", requireAuth, async (req, res) => {
+  try {
+    const order = await db.getOrderById(Number(req.params.id));
+    if (!order) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    if (order.userId !== req.user!.userId) {
+      res.status(403).json({ error: "لا يمكنك تعديل هذا الطلب" });
+      return;
+    }
+    if (order.status !== "pending") {
+      res.status(400).json({ error: "لا يمكن تعديل طلب لم يعد معلقاً" });
+      return;
+    }
+    const { items } = req.body as { items: { product_id: number; quantity: number }[] };
+    if (!items?.length) {
+      res.status(400).json({ error: "الطلب يجب أن يحتوي على منتج واحد على الأقل" });
+      return;
+    }
+    const updated = await db.updateOrderItems(Number(req.params.id), items);
+    if (!updated) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    const fullOrder = await db.getOrderById(Number(req.params.id));
+    res.json(fullOrder);
   } catch {
     res.status(500).json({ error: "خطأ في الخادم" });
   }
