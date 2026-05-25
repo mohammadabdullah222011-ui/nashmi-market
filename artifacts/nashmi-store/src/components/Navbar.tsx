@@ -83,6 +83,24 @@ export default function Navbar() {
                   />
                 </Link>
               ))}
+              {user && (
+                <Link
+                  href="/my-orders"
+                  data-testid="link-nav-طلباتي"
+                  className={`text-sm font-semibold transition-all duration-200 hover:text-red-500 relative group ${
+                    location === "/my-orders" ? "text-red-500" : "text-white/80"
+                  }`}
+                >
+                  طلباتي
+                  <span
+                    className={`absolute -bottom-1 left-0 right-0 h-0.5 bg-red-500 transition-transform duration-200 origin-right ${
+                      location === "/my-orders"
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100 group-hover:origin-left"
+                    }`}
+                  />
+                </Link>
+              )}
             </div>
 
             {/* Logo */}
@@ -246,6 +264,19 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              {user && (
+                <Link
+                  href="/my-orders"
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    location === "/my-orders"
+                      ? "bg-red-600/20 text-red-400 border border-red-600/30"
+                      : "text-white/80 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  طلباتي
+                </Link>
+              )}
 
               {user ? (
                 <>
