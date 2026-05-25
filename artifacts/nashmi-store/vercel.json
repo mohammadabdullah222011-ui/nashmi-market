@@ -1,9 +1,8 @@
 {
   "framework": "vite",
-  "nodeVersion": "22.x",
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist/public",
-  "installCommand": "pnpm install",
+  "installCommand": "npx pnpm@latest install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
