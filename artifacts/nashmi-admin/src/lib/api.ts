@@ -58,6 +58,8 @@ export const adminApi = {
 
   getOrderDetail: (id: number) => req<AdminOrder>("GET", `/orders/${id}`),
 
+  updateOrder: (id: number, data: Partial<AdminOrder>) => req<AdminOrder>("PUT", `/orders/${id}`, data),
+  deleteOrder: (id: number) => req<{ success: boolean }>("DELETE", `/orders/${id}`),
   updateOrderStatus: (id: number, status: string) => req<AdminOrder>("PUT", `/orders/${id}/status`, { status }),
 
   createManualOrder: (customerName: string, total: number, status: string, items?: OrderItem[]) =>

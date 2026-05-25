@@ -174,6 +174,25 @@ export const db = {
     return order;
   },
 
+  updateOrder: async (id: number, data: { customerName?: string; phone?: string; address?: string; total?: number; status?: string }) => {
+    const before = await getOrderById(id);
+    if (!before) return null;
+    const updateData: Record<string, unknown> = {};
+    if (data.customerName !== undefined) updateData.customerName = data.customerName;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.total !== undefined) updateData.total = data.total;
+    if (data.status !== undefined) updateData.status = data.status;
+    const rows = await drizzleDb.update(ordersTable).set(updateData).where(eq(ordersTable.id, id)).returning();
+    return rows[0] ?? null;
+  },
+
+  deleteOrder: async (id: number) => {
+    await drizzleDb.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+    const result = await drizzleDb.delete(ordersTable).where(eq(ordersTable.id, id)).returning();
+    return result.length > 0;
+  },
+
   // ── Notifications ──────────────────────────────────────
   getNotifications: () => notifications,
   getUnreadCount: () => notifications.filter(n => !n.read).length,

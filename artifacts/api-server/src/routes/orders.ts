@@ -104,6 +104,29 @@ router.get("/orders/:id", async (req, res) => {
   }
 });
 
+// PUT /api/orders/:id (admin - edit order)
+router.put("/orders/:id", async (req, res) => {
+  try {
+    const { customerName, phone, address, total, status } = req.body;
+    const updated = await db.updateOrder(Number(req.params.id), { customerName, phone, address, total, status });
+    if (!updated) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
+// DELETE /api/orders/:id (admin)
+router.delete("/orders/:id", async (req, res) => {
+  try {
+    const deleted = await db.deleteOrder(Number(req.params.id));
+    if (!deleted) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "خطأ في الخادم" });
+  }
+});
+
 // PUT /api/orders/:id/status (admin)
 router.put("/orders/:id/status", async (req, res) => {
   try {

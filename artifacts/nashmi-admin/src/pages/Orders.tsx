@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Filter, Download, RefreshCw, Loader2, ChevronDown, Plus, X, Eye } from "lucide-react";
+import { Search, Filter, Download, RefreshCw, Loader2, ChevronDown, Plus, X, Eye, Edit3, Trash2, AlertTriangle } from "lucide-react";
 import { adminApi, type AdminOrder } from "@/lib/api";
 import OrderDetailModal from "@/components/OrderDetailModal";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +32,133 @@ function formatDate(iso: string, t: (key: string) => string) {
   } catch {
     return iso;
   }
+}
+
+function DeleteConfirmModal({ order, onClose, onConfirm, deleting }: { order: AdminOrder; onClose: () => void; onConfirm: () => void; deleting: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}>
+      <div className="w-full max-w-sm mx-4 rounded-2xl p-6 border border-white/10" style={{ background: "linear-gradient(135deg, rgba(20,20,20,0.98), rgba(10,10,10,0.98))" }}>
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-red-500/15 border border-red-500/30">
+            <AlertTriangle size={28} className="text-red-400" />
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-lg">حذف الطلب</h2>
+            <p className="text-white/50 text-sm mt-2">هل أنت متأكد من حذف الطلب #{String(order.id).padStart(4, "0")}؟</p>
+            <p className="text-white/30 text-xs mt-1">العميل: {order.customerName} — {order.total.toLocaleString("en")} JD</p>
+          </div>
+          <div className="flex gap-3 w-full pt-2">
+            <button onClick={onClose} disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/50 hover:text-white text-sm font-semibold transition-all disabled:opacity-50">
+              إلغاء
+            </button>
+            <button onClick={onConfirm} disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{ background: "rgba(220,38,38,0.85)" }}>
+              {deleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+              حذف
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditOrderModal({ order, onClose, onSaved, t }: { order: AdminOrder; onClose: () => void; onSaved: (o: AdminOrder) => void; t: (k: string) => string }) {
+  const [customerName, setCustomerName] = useState(order.customerName);
+  const [phone, setPhone] = useState(order.phone || "");
+  const [address, setAddress] = useState(order.address || "");
+  const [total, setTotal] = useState(String(order.total));
+  const [status, setStatus] = useState(order.status);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName.trim() || !total) return;
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await adminApi.updateOrder(order.id, {
+        customerName: customerName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        total: Number(total),
+        status,
+      });
+      onSaved(updated);
+      onClose();
+    } catch (e: any) {
+      setError(e.message || "فشل التحديث");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}>
+      <div className="w-full max-w-md mx-4 rounded-2xl p-6 border border-white/10" style={{ background: "linear-gradient(135deg, rgba(20,20,20,0.98), rgba(10,10,10,0.98))" }}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Edit3 size={16} className="text-red-400" />
+            <h2 className="text-white font-bold text-lg">تعديل الطلب #{String(order.id).padStart(4, "0")}</h2>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors"><X size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white/50 text-xs font-medium mb-1.5">العميل *</label>
+              <input required type="text" value={customerName} onChange={e => setCustomerName(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-medium mb-1.5">رقم الهاتف</label>
+              <input type="text" value={phone} onChange={e => setPhone(e.target.value)} dir="ltr"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-white/50 text-xs font-medium mb-1.5">العنوان</label>
+            <input type="text" value={address} onChange={e => setAddress(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white/50 text-xs font-medium mb-1.5">المبلغ (JD)</label>
+              <input required type="number" min="0" step="0.01" value={total} onChange={e => setTotal(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50" dir="ltr" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-medium mb-1.5">الحالة</label>
+              <select value={status} onChange={e => setStatus(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50"
+                style={{ background: "rgba(255,255,255,0.05)" }}>
+                <option value="pending" style={{ background: "#111" }}>معلق</option>
+                <option value="shipped" style={{ background: "#111" }}>قيد الشحن</option>
+                <option value="completed" style={{ background: "#111" }}>مكتمل</option>
+                <option value="cancelled" style={{ background: "#111" }}>ملغي</option>
+              </select>
+            </div>
+          </div>
+          {error && <p className="text-red-400 text-xs">{error}</p>}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/50 hover:text-white text-sm font-semibold transition-all">
+              إلغاء
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{ background: "rgba(220,38,38,0.85)", boxShadow: "0 0 15px rgba(220,38,38,0.3)" }}>
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <Edit3 size={16} />}
+              حفظ التعديلات
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function AddOrderModal({ onClose, onAdded, t }: { onClose: () => void; onAdded: (o: AdminOrder) => void; t: (k: string) => string }) {
@@ -72,34 +199,19 @@ function AddOrderModal({ onClose, onAdded, t }: { onClose: () => void; onAdded: 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-white/50 text-xs font-medium mb-1.5">{t("العميل")} *</label>
-            <input
-              required
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+            <input required type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
               placeholder={t("العميل")}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-red-500/50 transition-colors"
-            />
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-red-500/50 transition-colors" />
           </div>
           <div>
             <label className="block text-white/50 text-xs font-medium mb-1.5">{t("المبلغ")} (JD) *</label>
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
+            <input required type="number" min="0" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)}
               placeholder="0.00"
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-red-500/50 transition-colors"
-              dir="ltr"
-            />
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-red-500/50 transition-colors" dir="ltr" />
           </div>
           <div>
             <label className="block text-white/50 text-xs font-medium mb-1.5">{t("الحالة")}</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+            <select value={status} onChange={(e) => setStatus(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-red-500/50 transition-colors"
               style={{ background: "rgba(255,255,255,0.05)" }}>
               <option value="pending" style={{ background: "#111" }}>{t("معلق")}</option>
@@ -138,6 +250,9 @@ export default function Orders() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [detailOrder, setDetailOrder] = useState<AdminOrder | null>(null);
+  const [editOrder, setEditOrder] = useState<AdminOrder | null>(null);
+  const [deleteOrder, setDeleteOrder] = useState<AdminOrder | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const lastMaxId = useRef(0);
   const { toast } = useToast();
 
@@ -148,16 +263,12 @@ export default function Orders() {
       setOrders(data);
       setError("");
 
-      // Detect new orders on every poll (including silent)
       if (Array.isArray(data) && data.length > 0) {
         const maxId = data.reduce((max, o) => Math.max(max, o.id), 0);
         if (lastMaxId.current > 0 && maxId > lastMaxId.current) {
           const newOrders = data.filter(o => o.id > lastMaxId.current);
           newOrders.forEach(order => {
-            toast({
-              title: "🛒 طلب جديد",
-              description: `طلب #${String(order.id).padStart(4, "0")} من ${order.customerName} — ${order.total.toLocaleString("en")} JD`,
-            });
+            toast({ title: "🛒 طلب جديد", description: `طلب #${String(order.id).padStart(4, "0")} من ${order.customerName} — ${order.total.toLocaleString("en")} JD` });
           });
         }
         lastMaxId.current = maxId;
@@ -195,6 +306,20 @@ export default function Orders() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteOrder) return;
+    setDeleting(true);
+    try {
+      await adminApi.deleteOrder(deleteOrder.id);
+      setOrders(prev => prev.filter(o => o.id !== deleteOrder.id));
+      setDeleteOrder(null);
+    } catch {
+      // ignore
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const ordersArray = Array.isArray(orders) ? orders : [];
   const filtered = ordersArray.filter((o) =>
     o.customerName.includes(search) ||
@@ -210,14 +335,17 @@ export default function Orders() {
       <OrderDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} />
 
       {showAddModal && (
-        <AddOrderModal
-          t={t}
-          onClose={() => setShowAddModal(false)}
-          onAdded={(order) => {
-        setOrders((prev) => [order, ...prev]);
-        fetchOrders(true);
-      }}
-        />
+        <AddOrderModal t={t} onClose={() => setShowAddModal(false)} onAdded={(order) => { setOrders((prev) => [order, ...prev]); fetchOrders(true); }} />
+      )}
+
+      {editOrder && (
+        <EditOrderModal order={editOrder} t={t} onClose={() => setEditOrder(null)} onSaved={(updated) => {
+          setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } : o));
+        }} />
+      )}
+
+      {deleteOrder && (
+        <DeleteConfirmModal order={deleteOrder} deleting={deleting} onClose={() => setDeleteOrder(null)} onConfirm={handleDelete} />
       )}
 
       {/* Header */}
@@ -231,14 +359,10 @@ export default function Orders() {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddModal(true)}
+          <button onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
             style={{ background: "rgba(220,38,38,0.85)", boxShadow: "0 0 15px rgba(220,38,38,0.3)" }}>
             <Plus size={15} />{t("طلب يدوي")}
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-all">
-            <Download size={15} />{t("تصدير")}
           </button>
         </div>
       </div>
@@ -271,9 +395,6 @@ export default function Orders() {
               className="w-full bg-white/5 border border-white/8 rounded-xl py-2 pl-8 pr-4 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-red-500/40 transition-colors"
               value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/8 text-white/50 hover:text-white text-sm transition-all">
-            <Filter size={14} />{t("فلتر")}
-          </button>
         </div>
 
         {loading ? (
@@ -286,7 +407,7 @@ export default function Orders() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/[0.06]">
-                  {[t("رقم الطلب"), t("العميل"), t("المبلغ"), t("الحالة"), t("تغيير الحالة"), t("التاريخ"), ""].map((h) => (
+                  {[t("رقم الطلب"), t("العميل"), t("المبلغ"), t("الحالة"), t("تغيير الحالة"), t("التاريخ"), "", ""].map((h) => (
                     <th key={h} className="text-right text-white/35 font-medium text-xs pb-3 px-2">{h}</th>
                   ))}
                 </tr>
@@ -326,9 +447,7 @@ export default function Orders() {
                             <Loader2 size={14} className="animate-spin text-red-400" />
                           ) : (
                             <div className="relative inline-block">
-                              <select
-                                value={arStatus}
-                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                              <select value={arStatus} onChange={(e) => handleStatusChange(order.id, e.target.value)}
                                 className="appearance-none bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white/70 focus:outline-none focus:border-red-500/40 cursor-pointer pr-5"
                                 style={{ background: "rgba(255,255,255,0.05)" }}>
                                 {[t("معلق"), t("قيد الشحن"), t("مكتمل"), t("ملغي")].map((s) => (
@@ -342,18 +461,30 @@ export default function Orders() {
                       </td>
                       <td className="py-3 px-2 text-white/35 text-xs">{formatDate(order.createdAt, t)}</td>
                       <td className="py-3 px-2">
-                        <button onClick={() => setDetailOrder(order)}
-                          className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition-all"
-                          title={t("عرض التفاصيل")}>
-                          <Eye size={14} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setEditOrder(order)}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                            title="تعديل">
+                            <Edit3 size={14} />
+                          </button>
+                          <button onClick={() => setDeleteOrder(order)}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="حذف">
+                            <Trash2 size={14} />
+                          </button>
+                          <button onClick={() => setDetailOrder(order)}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition-all"
+                            title={t("عرض التفاصيل")}>
+                            <Eye size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
                 {filtered.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-white/30 text-sm">
+                    <td colSpan={8} className="py-10 text-center text-white/30 text-sm">
                       {search ? t("لا توجد نتائج") : t("لا توجد طلبات حتى الآن")}
                     </td>
                   </tr>
